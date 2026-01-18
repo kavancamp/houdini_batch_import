@@ -24,35 +24,38 @@ if select_directory:
         
         
         if object[-1] == 'abc':
-            alembic_loader = geo_node.createNode('alembic', node_name=object[0])
-            alembic_loader.parm('fileName').set(item)
+            loader = geo_node.createNode('alembic', node_name=object[0])
+            loader.parm('fileName').set(item)
             
             unpack_node = geo_node.createNode('unpack', node_name=object[0] + '_unpack')
-            unpack_node.setInput(0, alembic_loader)
-            
-            # Transform and set scale to 0.01
-            transform_node = geo_node.createNode('xform', node_name=object[0] + '_xform')
-            transform_node.parm('scale').set(0.01)
-            transform_node.setInput(0, unpack_node)
-            
-            mat_node = geo_node.createNode('material', node_name=object[0] + '_mat')
-            mat_node.setInput(0, transform_node)
-            mat_node.moveToGoodPosition()
+            unpack_node.setInput(0, loader)
+
+            source_node = unpack_node
             
         else:
-            file_loader = geo_node.createNode('file', node_name=object[0])
-            file_loader.parm('file').set(item)
+            loader = geo_node.createNode('file', node_name=object[0])
+            loader.parm('file').set(item)
             
-            # Transform and set scale to 0.01
-            transform_node = geo_node.createNode('xform', node_name=object[0] + '_xform')
-            transform_node.parm('scale').set(0.01)
-            transform_node.setInput(0, file_loader)
+            source_node = loader
             
-            mat_node = geo_node.createNode('material', node_name=object[0] + '_mat')
-            mat_node.setInput(0, transform_node)
+            
+        # Transform and set scale to 0.01
+        xform_node = geo_node.createNode(
+            'xform',
+            node_name=object[0] + '_xform'
+        )
+        xform_node.parm('scale').set(0.01)
+        xform_node.setInput(0, source_node)
+        
+        # Material node
+        mat_node = geo_node.createNode(
+            'material',
+            node_name=object[0] + '_mat'
+        )
+        mat_node.setInput(0, xform_node)
     
-        merge_node.setInput(add_to_merge, mat_node)
-        add_to_merge += 1
+        # merge
+        merge_node.setNextInput(mat_node)
         
     null = geo_node.createNode("null", node_name="_OUT_")
     null.setInput(0, merge_node)
